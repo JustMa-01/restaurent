@@ -1,10 +1,11 @@
-import React from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { UtensilsCrossed, Home, Info, Phone, User, LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 export function Header() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
 
@@ -32,7 +33,7 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Navigation */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
               to="/"
@@ -99,13 +100,100 @@ export function Header() {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button className="text-gray-700 hover:text-orange-600">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-gray-700 hover:text-orange-600 transition-colors"
+            >
+              <svg 
+                className="h-6 w-6" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                {isMobileMenuOpen ? (
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 18L18 6M6 6l12 12" 
+                  />
+                ) : (
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 6h16M4 12h16M4 18h16" 
+                  />
+                )}
               </svg>
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="md:hidden py-4 border-t"
+          >
+            <div className="flex flex-col space-y-2">
+              <Link
+                to="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/about"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/about') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'
+                }`}
+              >
+                About
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/contact') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'
+                }`}
+              >
+                Contact
+              </Link>
+              {user ? (
+                <>
+                  <div className="border-t pt-2 mt-2">
+                    <button
+                      onClick={async () => {
+                        await handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`px-3 py-2 rounded-md text-base font-medium ${
+                    isActive('/login') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'
+                  }`}
+                >
+                  Staff Login
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
     </header>
   );

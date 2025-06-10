@@ -1,9 +1,12 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { UtensilsCrossed, Clock, MapPin, Star, ChefHat, Users, Phone } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { UtensilsCrossed, Clock, MapPin, Star, ChefHat, Users, Phone, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export function HomePage() {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+
   const features = [
     {
       icon: <UtensilsCrossed className="h-8 w-8" />,
@@ -47,6 +50,21 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Back to Dashboard Button */}
+      {profile?.role === 'manager' && (
+        <div className="bg-gray-100 p-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Dashboard</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-orange-600 via-red-500 to-pink-600 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
