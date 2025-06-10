@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { LogIn, Eye, EyeOff, UserCheck, ChefHat } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 export function Login() {
@@ -29,39 +28,26 @@ export function Login() {
       const { data, error } = await signIn(email, password);
       
       if (error) {
-        toast.error('You are entering wrong credentials.');
+        if (error.message === 'Invalid refresh token') {
+          // Clear any existing session data
+          localStorage.removeItem('sb-rizvvlpueflykzwefgyz-auth-token');
+          toast.error('Your session has expired. Please sign in again.');
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 
-      if (data.user) {
-        // Fetch user profile to check role
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError || !profileData) {
-          toast.error('You are entering wrong credentials.');
-          return;
-        }
-
-        if (profileData.role !== selectedRole) {
-          toast.error(`You are entering wrong credentials.`);
-          return;
-        }
-
-        toast.success('Login successful!');
-        
-        // Redirect based on role
-        if (profileData.role === 'manager') {
-          navigate('/dashboard');
-        } else {
-          navigate('/servant');
-        }
+      if (data?.user?.role !== selectedRole) {
+        toast.error('Invalid credentials for selected role');
+        return;
       }
+
+      toast.success('Successfully signed in!');
+      navigate('/dashboard');
     } catch (error) {
-      toast.error('You are entering wrong credentials.');
+      toast.error('An unexpected error occurred');
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }
