@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 .env
 .netlify
+
+# Do NOT ignore public folder!
+# public

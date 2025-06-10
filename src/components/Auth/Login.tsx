@@ -4,6 +4,7 @@ import { LogIn, Eye, EyeOff, UserCheck, ChefHat } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -28,23 +29,31 @@ export function Login() {
       const { data, error } = await signIn(email, password);
       
       if (error) {
-        if (error.message === 'Invalid refresh token') {
-          // Clear any existing session data
-          localStorage.removeItem('sb-rizvvlpueflykzwefgyz-auth-token');
-          toast.error('Your session has expired. Please sign in again.');
-        } else {
-          toast.error(error.message);
-        }
+        toast.error(error.message);
         return;
       }
 
-      if (data?.user?.role !== selectedRole) {
+      if (!data.user) {
+        throw new Error('User data is missing');
+      }
+
+      // Wait for profile data
+      const profile = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profile.error || profile.data?.role !== selectedRole) {
         toast.error('Invalid credentials for selected role');
         return;
       }
 
+      // Success path
+      const redirectPath = selectedRole === 'manager' ? '/dashboard' : '/servant';
+      navigate(redirectPath);
       toast.success('Successfully signed in!');
-      navigate('/dashboard');
+      
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Login error:', error);

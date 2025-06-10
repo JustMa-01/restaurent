@@ -11,9 +11,17 @@ import { ServantDashboard } from './components/Dashboard/ServantDashboard';
 import { CustomerExperience } from './pages/CustomerExperience';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
+import { useState } from 'react';
+import { NotificationSound } from './utils/notifications';
 
 function App() {
   const { loading } = useAuth();
+  const [soundEnabled, setSoundEnabled] = useState(NotificationSound['userInteracted']);
+
+  const handleEnableSound = () => {
+    NotificationSound.setUserInteracted();
+    setSoundEnabled(true);
+  };
 
   if (loading) {
     return (
@@ -27,58 +35,70 @@ function App() {
   }
 
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/customer" element={<CustomerExperience />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute requiredRole="manager">
-                  <ManagerDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/servant"
-              element={
-                <ProtectedRoute requiredRole="servant">
-                  <ServantDashboard />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </main>
-        <Footer />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-              borderRadius: '10px',
-            },
-            success: {
+    <>
+      {!soundEnabled && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <button
+            onClick={handleEnableSound}
+            className="bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-semibold shadow-lg"
+          >
+            Enable Sound Notifications
+          </button>
+        </div>
+      )}
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          <Header />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/customer" element={<CustomerExperience />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute requiredRole="manager">
+                    <ManagerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/servant"
+                element={
+                  <ProtectedRoute requiredRole="servant">
+                    <ServantDashboard />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </main>
+          <Footer />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
               style: {
-                background: '#10B981',
+                background: '#363636',
+                color: '#fff',
+                borderRadius: '10px',
               },
-            },
-            error: {
-              style: {
-                background: '#EF4444',
+              success: {
+                style: {
+                  background: '#10B981',
+                },
               },
-            },
-          }}
-        />
-      </div>
-    </Router>
+              error: {
+                style: {
+                  background: '#EF4444',
+                },
+              },
+            }}
+          />
+        </div>
+      </Router>
+    </>
   );
 }
 

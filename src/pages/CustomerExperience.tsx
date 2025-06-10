@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TableSelection } from '../components/Customer/TableSelection';
 import { Menu } from '../components/Customer/Menu';
@@ -8,6 +8,7 @@ import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import { getDeviceId } from '../utils/deviceUtils';
 import toast from 'react-hot-toast';
+import { NotificationSound, orderStatusMessages } from '../utils/notifications';
 
 type CustomerStep = 'table-selection' | 'menu' | 'cart' | 'order-status';
 
@@ -202,6 +203,109 @@ export function CustomerExperience() {
         return null;
     }
   };
+
+  useEffect(() => {
+    if (!selectedTable) return;
+
+    // Initialize notification sound
+    NotificationSound.init();
+
+    // Subscribe to order status changes
+    const channel = supabase
+      .channel(`order-status-${selectedTable}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `table_number=eq.${selectedTable}`,
+        },
+        (payload) => {
+          const oldStatus = payload.old.status;
+          const newStatus = payload.new.status === 'served' ? 'order is ready' : payload.new.status as string;
+          
+          if (newStatus !== oldStatus) {
+            // Play appropriate notification sound based on status
+            if (newStatus === 'preparing') {
+              NotificationSound.play('preparing');
+            } else if (newStatus === 'order is ready') {
+              NotificationSound.play('ready');
+            } else {
+              NotificationSound.play('notify');
+            }
+            
+            // Show toast notification
+            const message = orderStatusMessages[newStatus as keyof typeof orderStatusMessages] || `Order status: ${newStatus}`;
+            toast(message, {
+              icon: newStatus === 'order is ready' ? '🍽️' : '🔔',
+              duration: 5000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+                borderRadius: '10px',
+              },
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [selectedTable]);
+
+  // Move useRef to the top-level of the component
+  const prevStatusRef = useRef<string | undefined>(undefined);
+
+  // Only initialize NotificationSound once per mount
+  useEffect(() => {
+    NotificationSound.init();
+  }, []);
+
+  // Listen for order status changes and play notification sounds
+  useEffect(() => {
+    if (!currentOrder?.id) return;
+
+    // Set the initial previous status
+    prevStatusRef.current = currentOrder.status;
+
+    const channel = supabase
+      .channel(`customer-order-status-${currentOrder.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${currentOrder.id}`,
+        },
+        (payload) => {
+          const newStatus = payload.new.status;
+          const prevStatus = prevStatusRef.current;
+
+          if (prevStatus !== newStatus) {
+            if (prevStatus === 'pending' && newStatus === 'preparing') {
+              NotificationSound.play('preparing');
+            }
+            if (
+              prevStatus === 'preparing' &&
+              (newStatus === 'served' || newStatus === 'order is ready')
+            ) {
+              NotificationSound.play('ready');
+            }
+            prevStatusRef.current = newStatus;
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [currentOrder?.id, currentOrder?.status]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
