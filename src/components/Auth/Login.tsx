@@ -220,8 +220,8 @@ export function Login() {
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <h4 className="text-sm font-medium text-gray-900 mb-2">Demo Credentials:</h4>
               <div className="text-xs text-gray-600 space-y-1">
-                <p><strong>Manager:</strong> admin@manager.com / manager123</p>
-                <p><strong>Servant:</strong> staff@servant.com / servant123</p>
+                <p><strong>Manager:</strong> admin@manager.com / Hemanth</p>
+                <p><strong>Servant:</strong> admin@servant.com / Hello123</p>
               </div>
             </div>
           </motion.div>
